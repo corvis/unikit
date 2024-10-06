@@ -1,0 +1,47 @@
+name: Build wheel
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      git_ref:
+        required: true
+        type: string
+    secrets:
+      pypi_token:
+        required: true
+      pypi_private_token:
+        required: true
+      pypi_private_url:
+        required: true
+
+jobs:
+  run:
+    name: Build and Publish python packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
+
+      - name: Set up Python and Poetry
+        uses: cchangelabs/action-setup-python-poetry@v1
+        with:
+          python-version: 3.11
+          poetry-version: 1.5.1
+
+      - name: Install dependencies
+        run: |
+          make verify-prerequisites deps
+
+      - name: Build and publish packages
+        run: |
+          export POETRY_HTTP_BASIC_PYPI_USERNAME=__token__
+          export POETRY_HTTP_BASIC_PYPI_PASSWORD="${{ secrets.pypi_token }}"
+          make publish
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist/*
