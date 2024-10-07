@@ -20,8 +20,8 @@ jobs:
       - name: Set up Python and Poetry
         uses: cchangelabs/action-setup-python-poetry@v1
         with:
-          python-version: 3.11
-          poetry-version: 1.5.1
+          python-version: 3.12
+          poetry-version: 1.8.3
 
       - name: Install dependencies
         run: |
