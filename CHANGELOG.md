@@ -1,3 +1,9 @@
+## 0.3.0 (2024-10-11)
+
+### Feat
+
+- **di**: make django di module async compatible
+
 ## 0.2.0 (2024-10-07)
 
 ### Feat
