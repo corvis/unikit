@@ -44,11 +44,16 @@ class _DjangoDiModule(DiModule):
 
     def __init__(self) -> None:
         super().__init__()
-        self._local = threading.local()
+        try:
+            from asgiref.local import Local
+
+            self._local: Local | threading.local = Local()
+        except ImportError:
+            self._local = threading.local()
 
     def set_request(self, request: HttpRequest) -> None:
         """Set the current request in the thread local storage."""
-        if isinstance(request, ASGIRequest):
+        if isinstance(request, ASGIRequest) and isinstance(self._local, threading.local):
             if settings.DEBUG:
                 logger.warning(
                     "Calling DjangoModule.set_request with a ASGIRequest will lead to "
