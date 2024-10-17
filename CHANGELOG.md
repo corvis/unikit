@@ -1,3 +1,9 @@
+## 0.4.0 (2024-10-17)
+
+### Feat
+
+- **workers**: add initial taskiq support
+
 ## 0.3.0 (2024-10-11)
 
 ### Feat
