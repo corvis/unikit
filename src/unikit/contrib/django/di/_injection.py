@@ -1,6 +1,7 @@
 #
 #  Copyright 2024 by Dmitry Berezovsky, MIT License
 #
+import asyncio
 import functools
 from importlib import import_module
 from inspect import isfunction, ismethod
@@ -8,16 +9,19 @@ import logging
 import threading
 from typing import Any, Callable, Sequence, cast, get_type_hints
 
+from asgiref.sync import markcoroutinefunction
 from django.conf import settings
 from django.contrib.sites import management
 from django.core.handlers.asgi import ASGIRequest
 from django.http import HttpRequest, HttpResponse
-from django.urls import URLPattern, URLResolver
+from django.template import Engine
+from django.urls import URLPattern, URLResolver, get_resolver
 from django.views.decorators.csrf import csrf_exempt
 from injector import Binder, Injector
 
 from unikit.contrib.django.di.base import BaseDiSupportedApp
 from unikit.di import DiModule
+from unikit.utils.async_ import maybe_awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,32 @@ class _DjangoInjectionApp(BaseDiSupportedApp):
         super().__init__(app_name, app_module)
         self.django_module = _DjangoDiModule()
         self._di_container.binder.install(self.django_module)
+
+    def ready(self) -> None:
+        """Django callback invoked when application is ready to be used."""
+        super().ready()
+        if self.ENABLE_COMMAND_INJECTION:
+            patch_command_loader(self._di_container)
+
+        if self.ENABLE_VIEW_INJECTION:
+            resolver: URLResolver | None = None
+            try:
+                resolver = get_resolver()
+            except Exception:
+                logger.debug("Resolver is not configured, skipping.")
+            if resolver:
+                _process_resolver(resolver, self._di_container)
+
+        if self.ENABLE_TEMPLATE_PROCESSOR_INJECTION:
+            engine: Engine | None = None
+            try:
+                engine = Engine.get_default()
+            except Exception:
+                logger.debug("Template engine is not configured, skipping.")
+            if engine:
+                engine.template_context_processors = tuple(
+                    _process_list(engine.template_context_processors, self._di_container)
+                )
 
 
 class _DjangoDiModule(DiModule):
@@ -197,7 +227,12 @@ def __check_existing_csrf_exempt(fun: Callable, wrapper: Callable) -> Callable:
 def __wrap_function(fun: Callable, injector: Injector) -> Callable:
     @functools.wraps(fun)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if asyncio.iscoroutine(fun):
+            return maybe_awaitable(injector.call_with_injection(callable=fun, args=args, kwargs=kwargs))
         return injector.call_with_injection(callable=fun, args=args, kwargs=kwargs)
+
+    if asyncio.iscoroutine(fun):
+        markcoroutinefunction(wrapper)
 
     return __check_existing_csrf_exempt(fun, wrapper)
 
@@ -253,6 +288,9 @@ def __wrap_class_based_view(fun: Callable, injector: Injector) -> Callable:
         cast(Any, view).cls = cls
         cast(Any, view).initkwargs = initkwargs
         view = csrf_exempt(view)
+
+    if hasattr(cls, "view_is_async") and cls.view_is_async:
+        markcoroutinefunction(view)
 
     return __check_existing_csrf_exempt(fun, view)
 

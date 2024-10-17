@@ -1,6 +1,9 @@
 #
 #  Copyright 2024 by Dmitry Berezovsky, MIT License
 #
+from collections.abc import Iterable
+from typing import Any
+
 from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.exceptions import AlreadyRegistered
 from django.core.exceptions import ImproperlyConfigured
@@ -16,7 +19,7 @@ class DiSupportedAdminSite(AdminSite):  # type: ignore[misc]
         super().__init__(name)
         self._di_container = root_container
 
-    def register(self, model_or_iterable, admin_class=None, **options) -> None:  # type: ignore[no-untyped-def]
+    def register(self, model_or_iterable: ModelBase | Iterable, admin_class: ModelAdmin = None, **options: Any) -> None:
         """Register a model with the given admin class."""
         # The reason for this override is to instantiate model admin with call with injection
         admin_class = admin_class or ModelAdmin

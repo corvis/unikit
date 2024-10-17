@@ -3,6 +3,7 @@
 #
 import abc
 import logging
+from typing import Any
 
 from django.apps import AppConfig
 
@@ -16,7 +17,7 @@ class BaseDiSupportedApp(AppConfig, abc.ABC):  # type: ignore[misc]
 
     default = False
 
-    def __init__(self, app_name: str, app_module: str) -> None:
+    def __init__(self, app_name: str, app_module: Any) -> None:
         super().__init__(app_name, app_module)
         self._di_container = root_container
 
