@@ -1,3 +1,9 @@
+## 0.6.0 (2024-10-26)
+
+### Feat
+
+- **lock**: add with_lock context manager
+
 ## 0.5.0 (2024-10-26)
 
 ### Feat
