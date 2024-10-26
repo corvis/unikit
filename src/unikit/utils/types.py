@@ -5,6 +5,7 @@ import datetime
 from typing import Any, Protocol, TypeVar
 
 T = TypeVar("T")
+R = TypeVar("R")
 
 Number = int | float
 TAnyDate = TypeVar("TAnyDate", bound=datetime.date)

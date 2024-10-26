@@ -1,0 +1,13 @@
+---
+version: '3'
+services:
+  redis:
+    image: redis:7.0.5-alpine
+    ports:
+      - "1979:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: "no"
