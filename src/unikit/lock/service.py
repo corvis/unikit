@@ -125,6 +125,24 @@ class LockService(Abstract, metaclass=AbstractMeta):
         finally:
             self.release(lock)
 
+    @contextmanager
+    def with_lock(self, lock: Lock | None) -> Iterator[Never]:
+        """Context manager which will release a lock (if any given) at the end."""
+        try:
+            yield  # type: ignore[misc]
+        finally:
+            if lock:
+                self.release(lock)
+
+    @asynccontextmanager
+    async def awith_lock(self, lock: Lock | None) -> AsyncIterator[Never]:
+        """Context manager which will release a lock (if any given) at the end."""
+        try:
+            yield  # type: ignore[misc]
+        finally:
+            if lock:
+                await self.arelease(lock)
+
     @asynccontextmanager
     async def await_and_acquire(
         self,

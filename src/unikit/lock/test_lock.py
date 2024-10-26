@@ -65,3 +65,11 @@ class BaseLockServiceTest(unittest.TestCase, metaclass=abc.ABCMeta):
             with self.lock_service.wait_and_acquire("test", waiting_timeout=datetime.timedelta(milliseconds=500)):
                 pass
         self.assertIn("Cannot acquire lock", str(context.exception))
+
+    def test_with_lock_existing_lock(self):
+        lock = self.lock_service.acquire("test")
+        self.assertIsNotNone(lock)
+        with self.lock_service.with_lock(lock):
+            pass
+        lock = self.lock_service.get_lock("test")
+        self.assertIsNone(lock)  # Lock should be released after context manager
