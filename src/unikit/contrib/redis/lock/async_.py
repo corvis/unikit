@@ -10,7 +10,7 @@ from redis.asyncio import StrictRedis
 from unikit.contrib.redis.lock.base import BaseRedisLockService
 from unikit.contrib.redis.lock.dto import RedisLock
 from unikit.lock.dto import Lock
-from unikit.utils.async_ import run_async
+from unikit.utils.async_utils import run_async
 
 
 class AsyncRedisLockService(BaseRedisLockService):

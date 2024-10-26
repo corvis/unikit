@@ -1,3 +1,10 @@
+## 0.5.0 (2024-10-26)
+
+### Feat
+
+- **lock**: add lock service
+- **django**: add abstract model meta
+
 ## 0.4.0 (2024-10-17)
 
 ### Feat

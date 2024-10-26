@@ -21,7 +21,7 @@ from injector import Binder, Injector
 
 from unikit.contrib.django.di.base import BaseDiSupportedApp
 from unikit.di import DiModule
-from unikit.utils.async_ import maybe_awaitable
+from unikit.utils.async_utils import maybe_awaitable
 
 logger = logging.getLogger(__name__)
 
