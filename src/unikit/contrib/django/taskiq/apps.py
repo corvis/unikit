@@ -59,6 +59,7 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         super().ready()
 
         self.task_discovery_pattern = getattr(settings, "TASKIQ_TASK_DISCOVERY_PATTERN", self.task_discovery_pattern)
+        init_brokers_automatically = getattr(settings, "TASKIQ_AUTO_INIT_BROKERS", True)
 
         broker_object_paths = getattr(settings, "TASKIQ_BROKER_DEFINITION", None)
         if broker_object_paths is not None:
@@ -76,7 +77,27 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         for name, b in self.brokers.items():
             broker_registry.register(name, TaskiqWorkerService(b))
 
-        asyncio.get_event_loop().run_until_complete(self._init_brokers())
+        if init_brokers_automatically:
+            self.init_brokers()
 
-    async def _init_brokers(self) -> None:
+    async def ainit_brokers(self) -> None:
+        """Initialize all brokers."""
         await asyncio.gather(*[b.startup() for b in self.brokers.values()])
+
+    def init_brokers(self) -> None:
+        """Initialize all brokers."""
+        self._get_event_loop().run_until_complete(self.ainit_brokers())
+
+    def _get_event_loop(self) -> asyncio.AbstractEventLoop:
+        """Get event loop."""
+        from django.apps import apps
+
+        for app in apps.get_app_configs():
+            if app.name == "daphne":
+                try:
+                    from daphne.server import twisted_loop  # type: ignore
+
+                    return twisted_loop
+                except ImportError:
+                    pass
+        return asyncio.get_event_loop()
