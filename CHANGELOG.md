@@ -1,3 +1,9 @@
+## 0.6.1 (2024-10-27)
+
+### Fix
+
+- **taskiq**: fix initialization behaviour
+
 ## 0.6.0 (2024-10-26)
 
 ### Feat
