@@ -1,3 +1,10 @@
+## 0.6.2 (2024-10-27)
+
+### Fix
+
+- **taskiq**: add scheduler support
+- **lock**: fix bug in async version of wait_and_acquire
+
 ## 0.6.1 (2024-10-27)
 
 ### Fix
