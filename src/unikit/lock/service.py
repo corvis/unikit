@@ -177,7 +177,7 @@ class LockService(Abstract, metaclass=AbstractMeta):
         try:
             yield  # type: ignore[misc]
         finally:
-            self.release(lock)
+            await self.arelease(lock)
 
     @abc.abstractmethod
     def release(self, lock: Lock) -> None:
