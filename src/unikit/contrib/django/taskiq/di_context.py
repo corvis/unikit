@@ -3,11 +3,11 @@
 #
 import injector
 
-from unikit.di import DiModule
+from unikit.contrib.taskiq.di import BaseTaskiqDiModule
 from unikit.worker import WorkerServiceRegistry
 
 
-class _TaskiqModule(DiModule):
+class _TaskiqModule(BaseTaskiqDiModule):
 
     def configure(self, binder: injector.Binder) -> None:
         super().configure(binder)

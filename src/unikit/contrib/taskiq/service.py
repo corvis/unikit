@@ -8,7 +8,12 @@ from asgiref.sync import async_to_sync
 from taskiq import AsyncBroker, AsyncTaskiqTask, TaskiqResult
 from taskiq.kicker import AsyncKicker
 
-from unikit.contrib.taskiq.dto import TASKIQ_LABEL_SECURITY_CONTEXT, TASKIQ_LABEL_TASKNAME, TaskiqPostedTask
+from unikit.contrib.taskiq.dto import (
+    TASKIQ_LABEL_DATE_POSTED,
+    TASKIQ_LABEL_SECURITY_CONTEXT,
+    TASKIQ_LABEL_TASKNAME,
+    TaskiqPostedTask,
+)
 from unikit.security_context import SecurityContextDto
 from unikit.worker import JobStatus, PostedTask, TaskResult, WorkerService
 
@@ -53,7 +58,9 @@ class TaskiqWorkerService(WorkerService):
             )
 
         kicked_task = await kicker.with_broker(self.broker).kiq(*args, **kwargs)
-        return TaskiqPostedTask(uuid=kicked_task.task_id, timestamp=datetime.datetime.now(), task=kicked_task)
+        return TaskiqPostedTask(
+            uuid=kicked_task.task_id, timestamp=datetime.datetime.now(), task=kicked_task, task_name=name
+        )
 
     def get_task_result(self, job_uuid: str) -> TaskResult:
         """Get task result by UUID."""
@@ -72,14 +79,16 @@ class TaskiqWorkerService(WorkerService):
         return self.broker.find_task(task_name) is not None
 
     def __taskiq_result_to_task_result(self, uuid: str, result: TaskiqResult) -> TaskResult:
-        task_name = result.labels.get(TASKIQ_LABEL_TASKNAME)
+        time_posted_str = result.labels.get(TASKIQ_LABEL_DATE_POSTED)
+        time_posted = datetime.datetime.fromisoformat(time_posted_str) if time_posted_str else None
         return TaskResult(
             uuid=uuid,
             status=JobStatus.FAILED if result.is_err else JobStatus.SUCCESS,
             result=result.return_value,
             duration=datetime.timedelta(seconds=result.execution_time),
+            timestamp=time_posted,
             log=result.log,
             error_message=str(result.error) if result.error else None,
-            task_name=task_name,
+            task_name=result.labels.get(TASKIQ_LABEL_TASKNAME),
             security_context=SecurityContextDto.from_dict(result.labels.get(TASKIQ_LABEL_SECURITY_CONTEXT)),
         )
