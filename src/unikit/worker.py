@@ -2,12 +2,17 @@
 #  Copyright 2024 by Dmitry Berezovsky, MIT License
 #
 import abc
+from contextvars import ContextVar
 import dataclasses
 import datetime
 from enum import StrEnum
+import logging
 from typing import Any
 
+from injector import Injector, Provider
+
 from unikit.abstract import Abstract, AbstractMeta
+from unikit.di import root_container
 from unikit.registry import Registry
 from unikit.security_context import SecurityContextDto
 
@@ -27,6 +32,7 @@ class PostedTask:
 
     uuid: str
     timestamp: datetime.datetime
+    task_name: str | None = None
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -152,3 +158,58 @@ class WorkerServiceRegistry(Registry[str, WorkerService]):
         """Post the task by the given name asynchronously."""
         service = self.get_for_task_or_default(name) if fallback_to_default else self.get_for_task(name)
         return await service.apost_task(name, *args, **kwargs)
+
+
+class ContextVarWorkerTaskHolder:
+    """A holder which utilizes ContextVar to store current worker task."""
+
+    def __init__(self) -> None:
+        self.__current_task = ContextVar[PostedTask | None]("_unikit__current_task", default=None)
+
+    def set_current_task(self, task: PostedTask | None) -> None:
+        """Set the current worker task."""
+        self.__current_task.set(task)
+
+    def get_current_task(self) -> PostedTask | None:
+        """Get the current worker task."""
+        return self.__current_task.get()
+
+
+class ContextVarWorkerTaskProvider(Provider[PostedTask]):
+    """
+    Provider for Security Context based on ContextVarSecurityContextHolder.
+
+    Target context holder must be passed in constructor. If not passed, default_security_context_holder will be used.
+    """
+
+    def __init__(self, context_holder: ContextVarWorkerTaskHolder):
+        super().__init__()
+        self._context_holder = context_holder
+
+    def get(self, injector: Injector) -> PostedTask:
+        """Get Web Security Context."""
+        current_task = self._context_holder.get_current_task()
+        if current_task is None:
+            raise ValueError("Current task is not available.")
+        return current_task
+
+
+class TaskInfoLoggingFilter(logging.Filter):
+    """Logging filter to attach information about currently running task to every log record."""
+
+    def __init__(self, prefix: str = "") -> None:
+        self.prefix = prefix
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter log record."""
+        try:
+            task: PostedTask = root_container.get(PostedTask)
+            if task:
+                setattr(record, self.prefix + "task_uuid", task.uuid)
+                if task.task_name:
+                    setattr(record, self.prefix + "task_name", task.task_name)
+                if task.timestamp:
+                    setattr(record, self.prefix + "task_placed_at", task.timestamp)
+        except Exception:
+            pass  # This filter should never raise an exception
+        return True
