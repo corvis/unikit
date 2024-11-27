@@ -1,3 +1,13 @@
+## 0.7.0 (2024-11-28)
+
+### Feat
+
+- **taskiq**: add middleware to maintain current task information in DI context
+- **workers**: add task information in DI context
+- **logging**: add filter for logging security context
+- **logging**: add `with_logging_context` utility
+- add security context support
+
 ## 0.6.2 (2024-10-27)
 
 ### Fix
