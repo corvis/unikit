@@ -9,6 +9,7 @@ from typing import Any
 
 from unikit.abstract import Abstract, AbstractMeta
 from unikit.registry import Registry
+from unikit.security_context import SecurityContextDto
 
 
 class JobStatus(StrEnum):
@@ -39,6 +40,8 @@ class TaskResult:
     error_message: str | None = None
     log: str | None = None
     duration: datetime.timedelta | None = None
+    task_name: str | None = None
+    security_context: SecurityContextDto = dataclasses.field(default_factory=SecurityContextDto)
 
 
 class WorkerService(Abstract, metaclass=AbstractMeta):

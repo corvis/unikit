@@ -8,7 +8,8 @@ from asgiref.sync import async_to_sync
 from taskiq import AsyncBroker, AsyncTaskiqTask, TaskiqResult
 from taskiq.kicker import AsyncKicker
 
-from unikit.contrib.taskiq.dto import TaskiqPostedTask
+from unikit.contrib.taskiq.dto import TASKIQ_LABEL_SECURITY_CONTEXT, TASKIQ_LABEL_TASKNAME, TaskiqPostedTask
+from unikit.security_context import SecurityContextDto
 from unikit.worker import JobStatus, PostedTask, TaskResult, WorkerService
 
 
@@ -71,6 +72,7 @@ class TaskiqWorkerService(WorkerService):
         return self.broker.find_task(task_name) is not None
 
     def __taskiq_result_to_task_result(self, uuid: str, result: TaskiqResult) -> TaskResult:
+        task_name = result.labels.get(TASKIQ_LABEL_TASKNAME)
         return TaskResult(
             uuid=uuid,
             status=JobStatus.FAILED if result.is_err else JobStatus.SUCCESS,
@@ -78,4 +80,6 @@ class TaskiqWorkerService(WorkerService):
             duration=datetime.timedelta(seconds=result.execution_time),
             log=result.log,
             error_message=str(result.error) if result.error else None,
+            task_name=task_name,
+            security_context=SecurityContextDto.from_dict(result.labels.get(TASKIQ_LABEL_SECURITY_CONTEXT)),
         )

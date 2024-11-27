@@ -8,13 +8,16 @@ import importlib.util
 import inspect
 import logging
 import typing
-from typing import Any, Callable, Generic, Sequence, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeAlias, TypeVar
 
 import injector
 from injector import T
 
 from unikit.dto.interfaces import Bootstrapable, Nameable
 from unikit.registry import Registry
+
+if TYPE_CHECKING:
+    from unikit.security_context import TBaseSecurityContext
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +156,30 @@ class DiModule(injector.Module):
                 to=InterfaceAwareClassProvider(to, interface_cls=interface),
                 scope=IfaceAwareSingletonScope,
             )
+
+    def register_security_context(
+        self,
+        interface_cls: type["TBaseSecurityContext"],
+        provider_cls: type[injector.Provider["TBaseSecurityContext"]],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Register a security context provider.
+
+        :param interface_cls: Interface of the security context
+        :param provider_cls: Provider which provides given security context
+        :param args: arguments to be passed to provider constructor
+        :param kwargs: kwargs to be passed to provider constructor
+        """
+        assert self.__binder is not None
+        from unikit.security_context import BaseSecurityContext, SecurityContextProxy
+
+        provider = injector.InstanceProvider(
+            SecurityContextProxy(provider_cls(*args, **kwargs), self.__binder.injector)  # type: ignore
+        )
+        self.__binder.bind(interface_cls, provider)
+        self.__binder.bind(BaseSecurityContext, provider)  # type: ignore
 
     def register_singleton_impl(self, interface: type, to: Sequence[BindArg] | BindArg) -> None:
         """
