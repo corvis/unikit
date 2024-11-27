@@ -3,7 +3,7 @@
 #
 import dataclasses
 
-from taskiq import AsyncTaskiqTask
+from taskiq import AsyncTaskiqTask, TaskiqMessage
 
 from unikit.worker import PostedTask
 
@@ -15,5 +15,13 @@ class TaskiqPostedTask(PostedTask):
     task: AsyncTaskiqTask
 
 
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class TaskiqTask(PostedTask):
+    """TaskiqTask is a DTO for Taskiq task."""
+
+    message: TaskiqMessage
+
+
 TASKIQ_LABEL_SECURITY_CONTEXT = "unikit_security_context"
 TASKIQ_LABEL_TASKNAME = "__taskiq__task_name"
+TASKIQ_LABEL_DATE_POSTED = "__taskiq__date_posted"
