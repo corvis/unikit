@@ -3,12 +3,13 @@
 #
 import abc
 from contextvars import ContextVar
+import logging
 from typing import Any, Self, TypeVar
 
 from injector import Injector, Provider
 
 from unikit.abstract import Abstract, AbstractMeta
-from unikit.di import DiProxy
+from unikit.di import DiProxy, root_container
 
 
 class SecurityContextDto(dict[str, Any]):
@@ -111,3 +112,22 @@ class ContextVarSecurityContextProvider(Provider[BaseSecurityContext]):
         if security_context is None:
             raise ValueError("Security Context is not available.")
         return security_context
+
+
+class SecurityContextLoggingFilter(logging.Filter):
+    """Logging filter to attach Security Context entries to every log record."""
+
+    def __init__(self, prefix: str = "") -> None:
+        self.prefix = prefix
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter log record."""
+        try:
+            security_context = root_container.get(BaseSecurityContext)  # type: ignore[type-abstract]
+            if security_context:
+                dto = security_context.to_dto()
+                for k, v in dto.items():
+                    setattr(record, self.prefix + k, v)
+        except Exception:
+            pass  # This filter should never raise an exception
+        return True
