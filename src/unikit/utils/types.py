@@ -2,13 +2,16 @@
 #  Copyright 2024 by Dmitry Berezovsky, MIT License
 #
 import datetime
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeAlias, TypeVar
 
 T = TypeVar("T")
 R = TypeVar("R")
 
-Number = int | float
+Number: TypeAlias = int | float
+SerializablePrimitive: TypeAlias = str | Number | bool | None
+
 TAnyDate = TypeVar("TAnyDate", bound=datetime.date)
+TSerializablePrimitive = TypeVar("TSerializablePrimitive", bound=SerializablePrimitive)
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
