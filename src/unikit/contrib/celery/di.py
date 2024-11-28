@@ -8,7 +8,7 @@ from celery import Task
 from celery._state import current_task, pop_current_task, push_current_task
 import injector
 
-from unikit.utils.types import T
+from unikit.utils.type_utils import T
 
 
 class TaskBodyMeta(abc.ABCMeta):

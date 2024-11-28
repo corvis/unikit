@@ -3,7 +3,7 @@
 #
 import datetime
 
-from unikit.utils.types import TAnyDate
+from unikit.utils.type_utils import TAnyDate
 
 
 def datetime_now() -> datetime.datetime:

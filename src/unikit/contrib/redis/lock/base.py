@@ -9,7 +9,7 @@ import random
 from typing import Any
 
 from unikit.lock.service import LockService
-from unikit.utils.types import none_raises
+from unikit.utils.type_utils import none_raises
 
 from .dto import CHARACTERS, DEFAULT_LOCK_TIMEOUT, RedisLock
 
