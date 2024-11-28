@@ -4,7 +4,7 @@
 from collections.abc import Collection, Iterable
 from typing import Sequence
 
-from .types import T
+from .type_utils import T
 
 
 def filter_none(collection: Sequence[T]) -> list[T]:

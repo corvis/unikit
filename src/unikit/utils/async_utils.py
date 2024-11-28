@@ -8,7 +8,7 @@ import inspect
 from typing import Any, Awaitable, Callable, Coroutine
 
 from unikit.registry import T
-from unikit.utils.types import R
+from unikit.utils.type_utils import R
 
 _HAS_ASGIREF = True
 try:

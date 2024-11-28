@@ -7,7 +7,7 @@ import string
 from typing import Self
 
 from unikit.lock.dto import Lock
-from unikit.utils.types import none_raises
+from unikit.utils.type_utils import none_raises
 
 logger = logging.getLogger(__name__)
 
