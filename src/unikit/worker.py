@@ -13,8 +13,14 @@ from injector import Injector, Provider
 
 from unikit.abstract import Abstract, AbstractMeta
 from unikit.di import root_container
+from unikit.progress import ProgressState
 from unikit.registry import Registry
 from unikit.security_context import SecurityContextDto
+from unikit.utils import dict_utils
+from unikit.utils.default import OnErrorDef, raise_or_default
+from unikit.utils.type_utils import T
+
+RESULT_KEY_PROGRESS_STATE = "progress_state"
 
 
 class JobStatus(StrEnum):
@@ -48,6 +54,22 @@ class TaskResult:
     duration: datetime.timedelta | None = None
     task_name: str | None = None
     security_context: SecurityContextDto = dataclasses.field(default_factory=SecurityContextDto)
+
+    def get_result_obj(self, target_cls: type[T], key: str | None = None, on_missing: OnErrorDef[Any] = None) -> Any:
+        """Get the result object by the given target class."""
+        if self.result is None:
+            return raise_or_default(on_missing, "Result is not available")
+        return dict_utils.get_object(self.result, target_cls, key=key, on_missing=on_missing)
+
+    def get_progress_state(self) -> ProgressState:
+        """Get the progress state from the result."""
+        default = ProgressState()
+        return self.get_result_obj(ProgressState, key=RESULT_KEY_PROGRESS_STATE, on_missing=default)
+
+    @property
+    def is_progress_state_available(self) -> bool:
+        """Check if the progress state is available."""
+        return not self.get_progress_state().is_empty
 
 
 class WorkerService(Abstract, metaclass=AbstractMeta):

@@ -5,6 +5,7 @@ import datetime
 from typing import Any, Generic
 
 from taskiq import TaskiqMessage, TaskiqMiddleware, TaskiqResult
+from taskiq.depends.progress_tracker import TaskProgress, TaskState
 
 from unikit.contrib.taskiq.di import default_current_task_holder
 from unikit.contrib.taskiq.dto import (
@@ -64,6 +65,24 @@ class TaskInfoDiMiddleware(TaskiqMiddleware, LogMixin):
     async def on_error(self, message: TaskiqMessage, result: TaskiqResult[Any], exception: BaseException) -> None:
         """On error hook to clean up task info."""
         default_current_task_holder.set_current_task(None)
+
+
+class ReportExecutionStartedMiddleware(TaskiqMiddleware):
+    """Middleware to report execution start time."""
+
+    def __init__(self, include_labels: bool = True) -> None:
+        super().__init__()
+        self.include_labels = include_labels
+
+    async def pre_execute(self, message: TaskiqMessage) -> TaskiqMessage:
+        """Pre-execute hook to attach execution start time to Taskiq message."""
+        metadata = {}
+        if self.include_labels:
+            metadata["labels"] = message.labels
+        await self.broker.result_backend.set_progress(
+            message.task_id, TaskProgress(state=TaskState.STARTED, meta=metadata)
+        )
+        return message
 
 
 class SecurityContextMiddleware(TaskiqMiddleware, Generic[TBaseSecurityContext]):
