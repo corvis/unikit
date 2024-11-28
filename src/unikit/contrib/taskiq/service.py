@@ -6,6 +6,7 @@ from typing import Any
 
 from asgiref.sync import async_to_sync
 from taskiq import AsyncBroker, AsyncTaskiqTask, TaskiqResult
+from taskiq.depends.progress_tracker import TaskProgress
 from taskiq.kicker import AsyncKicker
 
 from unikit.contrib.taskiq.dto import (
@@ -27,10 +28,13 @@ class TaskiqWorkerService(WorkerService):
 
     async def aget_task_result(self, job_uuid: str) -> TaskResult:
         """Get task result by UUID."""
-        taskiq_result = await AsyncTaskiqTask(
-            task_id=job_uuid,
-            result_backend=self.broker.result_backend,
-        ).get_result()
+        taskiq_result: TaskiqResult | None = None
+        try:
+            taskiq_result = await self.broker.result_backend.get_result(job_uuid, with_logs=True)
+        except Exception:
+            progress = await self.broker.result_backend.get_progress(job_uuid)
+            if progress:
+                return self.__taskiq_progress_to_task_result(job_uuid, progress)
         if taskiq_result is None:
             return TaskResult(uuid=job_uuid, status=JobStatus.PENDING)
         return self.__taskiq_result_to_task_result(job_uuid, taskiq_result)
@@ -77,6 +81,19 @@ class TaskiqWorkerService(WorkerService):
     def supports_task(self, task_name: str) -> bool:
         """Check if the worker service supports the given task."""
         return self.broker.find_task(task_name) is not None
+
+    def __taskiq_progress_to_task_result(self, uuid: str, progress: TaskProgress[dict[str, Any]]) -> TaskResult:
+        labels = progress.meta.get("labels", {}) if progress.meta else {}
+        time_posted_str = labels.get(TASKIQ_LABEL_DATE_POSTED)
+        time_posted = datetime.datetime.fromisoformat(time_posted_str) if time_posted_str else None
+        return TaskResult(
+            uuid=uuid,
+            status=JobStatus.RUNNING,
+            result=progress.meta,
+            timestamp=time_posted,
+            task_name=labels.get(TASKIQ_LABEL_TASKNAME),
+            security_context=SecurityContextDto.from_dict(labels.get(TASKIQ_LABEL_SECURITY_CONTEXT)),
+        )
 
     def __taskiq_result_to_task_result(self, uuid: str, result: TaskiqResult) -> TaskResult:
         time_posted_str = result.labels.get(TASKIQ_LABEL_DATE_POSTED)
