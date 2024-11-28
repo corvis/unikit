@@ -1,3 +1,14 @@
+## 1.0.0 (2024-11-28)
+
+### Feat
+
+- **workers**: add progress reporting
+- **utils**: add new methods to dict_utils (get_object, set_objects)
+
+### Refactor
+
+- **utils**: rename package `utils.types` -> `utils.type_utils`
+
 ## 0.7.0 (2024-11-28)
 
 ### Feat
