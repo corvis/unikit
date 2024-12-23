@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "unikit"
-version = "1.0.0"
+version = "1.1.0"
 license = "MIT"
 description = "A versatile Python library that provides a set of generic classes and utilities for common application needs, including dependency injection, object registries, file system abstraction, string parsing, and many others. Designed to streamline development, UniKit offers reusable tools to simplify building robust and scalable applications."
 authors = ["Dmitry Berezovsky <unikit-dev@googlegroups.com>"]

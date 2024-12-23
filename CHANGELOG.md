@@ -1,3 +1,9 @@
+## 1.1.0 (2024-12-23)
+
+### Feat
+
+- **workers**: add opentelemetry support to taskiq
+
 ## 1.0.0 (2024-11-28)
 
 ### Feat
