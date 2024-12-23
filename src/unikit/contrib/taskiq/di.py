@@ -3,12 +3,13 @@
 #
 import injector
 
+from unikit.abstract import Abstract, AbstractMeta
 from unikit.contrib.taskiq.dto import TaskiqTask
 from unikit.di import DiModule, DiProxy
 from unikit.worker import ContextVarWorkerTaskHolder, ContextVarWorkerTaskProvider, PostedTask
 
 
-class BaseTaskiqDiModule(DiModule):
+class BaseTaskiqDiModule(DiModule, Abstract, metaclass=AbstractMeta):
     """Base DI module for Taskiq."""
 
     def configure(self, binder: injector.Binder) -> None:
