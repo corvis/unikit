@@ -1,3 +1,9 @@
+## 1.2.0 (2024-12-27)
+
+### Feat
+
+- **oltp**: add helper mixing to work with traces
+
 ## 1.1.0 (2024-12-23)
 
 ### Feat
