@@ -1,5 +1,5 @@
 #
-#  Copyright 2024 by Dmitry Berezovsky, MIT License
+#  Copyright 2025 by Dmitry Berezovsky, MIT License
 #
 import asyncio
 from typing import Any
@@ -38,6 +38,7 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         self.broker_paths: dict[str, str] = {}
         self.brokers: dict[str, AsyncBroker] = {}
         self.task_discovery_pattern = "**/tasks.py"
+        self.init_brokers_on_ready = getattr(settings, "TASKIQ_AUTO_INIT_BROKERS", False)
 
     @property
     def default_broker_name(self) -> str:
@@ -59,7 +60,6 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         super().ready()
 
         self.task_discovery_pattern = getattr(settings, "TASKIQ_TASK_DISCOVERY_PATTERN", self.task_discovery_pattern)
-        init_brokers_automatically = getattr(settings, "TASKIQ_AUTO_INIT_BROKERS", True)
 
         broker_object_paths = getattr(settings, "TASKIQ_BROKER_DEFINITION", None)
         if broker_object_paths is not None:
@@ -77,7 +77,7 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         for name, b in self.brokers.items():
             broker_registry.register(name, TaskiqWorkerService(b))
 
-        if init_brokers_automatically:
+        if self.init_brokers_on_ready:
             self.init_brokers()
 
     async def ainit_brokers(self) -> None:

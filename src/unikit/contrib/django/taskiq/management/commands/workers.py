@@ -1,5 +1,5 @@
 #
-#  Copyright 2024 by Dmitry Berezovsky, MIT License
+#  Copyright 2025 by Dmitry Berezovsky, MIT License
 #
 from typing import Any
 
@@ -17,6 +17,7 @@ class Command(BaseTaskiqCommand):
     def handle(self, *args: Any, **options: Any) -> None:
         """Start Taskiq worker process."""
         taskiq_app = self.taskiq_app
+        taskiq_app.init_brokers_on_ready = False
         broker_name = self._get_broker_name(args)
 
         broker_path_for_taskiq = self._to_taskiq_class_path(taskiq_app.broker_paths[broker_name])
