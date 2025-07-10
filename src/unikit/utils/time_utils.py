@@ -1,5 +1,5 @@
 #
-#  Copyright 2024 by Dmitry Berezovsky, MIT License
+#  Copyright 2025 by Dmitry Berezovsky, MIT License
 #
 import datetime
 

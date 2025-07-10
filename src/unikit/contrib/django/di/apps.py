@@ -1,5 +1,5 @@
 #
-#  Copyright 2024 by Dmitry Berezovsky, MIT License
+#  Copyright 2025 by Dmitry Berezovsky, MIT License
 #
 from unikit.contrib.django.di._injection import _DjangoInjectionApp
 
