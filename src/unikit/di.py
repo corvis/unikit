@@ -1,5 +1,5 @@
 #
-#  Copyright 2024 by Dmitry Berezovsky, MIT License
+#  Copyright 2025 by Dmitry Berezovsky, MIT License
 #
 import abc
 from functools import wraps
@@ -370,3 +370,15 @@ class DiProxy(Generic[T]):
 
     def __eq__(self, other: Any) -> bool:
         return self.underlying_object == other
+
+
+def unwrap_proxy(obj: T) -> T:
+    """
+    Unwrap DiProxy object if given object is DiProxy otherwise just return it.
+
+    :param obj: object to unwrap
+    :return: unwrapped object
+    """
+    if isinstance(obj, DiProxy):
+        return obj.underlying_object
+    return obj
