@@ -29,6 +29,7 @@ class TraceIdFromRequestLoggingFilter(logging.Filter):
         self.is_enabled = is_enabled
         self.log_field_name = log_field_name
         self.generate_trace_id_if_missing = generate_trace_id_if_missing
+        self._trace_id_rq_attr = "_rq_trace_id"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter log record."""
@@ -37,9 +38,14 @@ class TraceIdFromRequestLoggingFilter(logging.Filter):
         try:
             request = root_container.get(HttpRequest)
             if request:
-                trace_id = request.headers.get(self.trace_id_header_name, None)
+                trace_id = getattr(request, self._trace_id_rq_attr, None)
+                if not trace_id:
+                    trace_id = request.headers.get(self.trace_id_header_name, None)
+                    if trace_id:
+                        setattr(request, self._trace_id_rq_attr, trace_id)
                 if not trace_id and self.generate_trace_id_if_missing:
                     trace_id = str(uuid4()) + "-" + str(uuid4())
+                    setattr(request, self._trace_id_rq_attr, trace_id)
                 if trace_id:
                     setattr(record, self.log_field_name, trace_id)
         except Exception:  # noqa: S110
