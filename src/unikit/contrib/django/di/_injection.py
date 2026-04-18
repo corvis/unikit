@@ -268,8 +268,8 @@ def __wrap_class_based_view(fun: Callable, injector: Injector) -> Callable:
         )
         if not hasattr(self, "request"):
             raise AttributeError(
-                "%s instance has no 'request' attribute. Did you override "
-                "setup() and forget to call super()?" % cls.__name__
+                f"{cls.__name__} instance has no 'request' attribute. Did you override "
+                "setup() and forget to call super()?"
             )
         return _get_after_request_hook(fun, self.dispatch(request, *args, **kwargs))
 

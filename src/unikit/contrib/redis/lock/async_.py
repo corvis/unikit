@@ -85,7 +85,7 @@ class AsyncRedisLockService(BaseRedisLockService):
 
     async def dispose(self) -> None:
         """Dispose the service."""
-        await self.__redis.aclose()
+        await self.__redis.aclose()  # type: ignore[attr-defined]
 
     async def __acquire_lock(self, lock: RedisLock) -> RedisLock | None:
         acquired = await self.__redis.set(
@@ -98,6 +98,6 @@ class AsyncRedisLockService(BaseRedisLockService):
 
     async def __get_lock(self, lock_id: str, keep_secret: bool = False) -> RedisLock | None:
         return self._parse_lock(
-            await self.__redis.get(lock_id),
+            await self.__redis.get(lock_id),  # type: ignore[arg-type]
             keep_secret=keep_secret,
         )

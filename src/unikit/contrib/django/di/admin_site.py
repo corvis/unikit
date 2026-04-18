@@ -28,23 +28,23 @@ class DiSupportedAdminSite(AdminSite):  # type: ignore[misc]
         for model in model_or_iterable:
             if model._meta.abstract:
                 raise ImproperlyConfigured(
-                    "The model %s is abstract, so it cannot be registered with admin." % model.__name__
+                    f"The model {model.__name__} is abstract, so it cannot be registered with admin."
                 )
 
             if self.is_registered(model):
                 registered_admin = str(self.get_model_admin(model))
-                msg = "The model %s is already registered " % model.__name__
+                msg = f"The model {model.__name__} is already registered "
                 if registered_admin.endswith(".ModelAdmin"):
                     # Most likely registered without a ModelAdmin subclass.
-                    msg += "in app %r." % registered_admin.removesuffix(".ModelAdmin")
+                    msg += "in app {!r}.".format(registered_admin.removesuffix(".ModelAdmin"))
                 else:
-                    msg += "with %r." % registered_admin
+                    msg += f"with {registered_admin!r}."
                 raise AlreadyRegistered(msg)
 
             if not model._meta.swapped:
                 if options:
                     options["__module__"] = __name__
-                    admin_class = type("%sAdmin" % model.__name__, (admin_class,), options)
+                    admin_class = type(f"{model.__name__}Admin", (admin_class,), options)
 
                 # Instantiate the admin class to save in the registry
                 self._registry[model] = self._di_container.create_object(

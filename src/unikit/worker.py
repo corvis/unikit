@@ -237,6 +237,6 @@ class TaskInfoLoggingFilter(logging.Filter):
                     setattr(record, self.prefix + "task_name", task.task_name)
                 if task.timestamp:
                     setattr(record, self.prefix + "task_placed_at", task.timestamp)
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # This filter should never raise an exception
         return True

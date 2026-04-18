@@ -19,7 +19,7 @@ class OpenTelemetryMiddleware(TaskiqMiddleware):
     INSTRUMENTATION_NAME = "unikit.taskiq"
     TASK_ARGS_LENGTH_LIMIT = 1000
     MSG_SPAN_ATTRIBUTE = "__span"
-    MSG_CTX_TOKEN_ATTRIBUTE = "__otlp_ctx_token"
+    MSG_CTX_TOKEN_ATTRIBUTE = "__otlp_ctx_token"  # noqa: S105
 
     def __init__(self, tracer_provider: TracerProvider | None = None) -> None:
         if not tracer_provider:

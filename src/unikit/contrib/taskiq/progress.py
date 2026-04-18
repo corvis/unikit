@@ -56,7 +56,7 @@ class TaskProgressReporter:
 
     def __init__(
         self,
-        context: Context = Depends(),
+        context: Context = Depends(),  # noqa: B008
     ) -> None:
         self.context = context
 

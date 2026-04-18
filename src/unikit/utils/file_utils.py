@@ -7,7 +7,7 @@ import mimetypes
 import os
 import random
 import string
-from typing import IO, Literal, TextIO, TypeVar, Union, cast
+from typing import IO, Literal, TextIO, TypeVar, cast
 
 CONTENT_TYPE_GENERIC = "application/octet-stream"
 FILE_NAME_ALPHABET = string.ascii_lowercase + string.digits
@@ -64,7 +64,7 @@ def generate_random_file_name(length: int = 40) -> str:
     :param length: length of the string to be generated
     :return: random string
     """
-    return "".join(random.choice(FILE_NAME_ALPHABET) for _ in range(length))
+    return "".join(random.choice(FILE_NAME_ALPHABET) for _ in range(length))  # noqa S311
 
 
 def ensure_dir(dir_name: os.PathLike | str) -> None:

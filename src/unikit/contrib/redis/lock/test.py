@@ -15,6 +15,8 @@ from unikit.lock.test_lock import BaseLockServiceTest
     "Redis is not available, set REDIS_CACHE_URL env var",
 )
 class RedisLockServiceTest(BaseLockServiceTest):
+    """Tests for RedisLockService."""
+
     __test__ = True
 
     def _create_service(self) -> LockService:
@@ -26,6 +28,8 @@ class RedisLockServiceTest(BaseLockServiceTest):
     "Redis is not available, set REDIS_CACHE_URL env var",
 )
 class AsyncRedisLockServiceTest(BaseLockServiceTest):
+    """Tests for AsyncRedisLockService."""
+
     __test__ = True
 
     def _create_service(self) -> LockService:

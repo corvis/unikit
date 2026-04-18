@@ -32,7 +32,7 @@ class BaseRedisLockService(LockService, metaclass=abc.ABCMeta):
 
     @classmethod
     def _random_secret(cls) -> str:
-        return "".join(random.choice(CHARACTERS) for _ in range(22))
+        return "".join(random.choice(CHARACTERS) for _ in range(22))  # noqa S311
 
     @classmethod
     def _build_new_lock(

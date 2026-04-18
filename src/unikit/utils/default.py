@@ -6,7 +6,7 @@ __all__ = ("raise_or_default", "OnErrorDef")
 from typing import TypeVar, Union, cast
 
 TDefault = TypeVar("TDefault")
-OnErrorDef = Union[type[Exception], TDefault, None]
+OnErrorDef = Union[type[Exception], TDefault, None]  # noqa: UP007
 
 
 def raise_or_default(on_error: OnErrorDef[TDefault], error_msg: str) -> TDefault | None:

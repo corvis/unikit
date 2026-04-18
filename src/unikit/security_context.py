@@ -128,6 +128,6 @@ class SecurityContextLoggingFilter(logging.Filter):
                 dto = security_context.to_dto()
                 for k, v in dto.items():
                     setattr(record, self.prefix + k, v)
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # This filter should never raise an exception
         return True

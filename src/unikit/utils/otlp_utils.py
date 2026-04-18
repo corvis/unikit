@@ -23,7 +23,7 @@ class TraceMixin:
 
     def _set_tracer_name(self, name: str) -> None:
         """Set the tracer name."""
-        setattr(self, "_otlp_tracer_name", name)
+        self._otlp_tracer_name = name
 
     def _get_tracer_name(self) -> str:
         """Get the tracer name."""

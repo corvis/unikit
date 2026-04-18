@@ -22,8 +22,8 @@ class BaseTaskiqDiModule(DiModule, Abstract, metaclass=AbstractMeta):
 
         provider = injector.InstanceProvider(
             PostedTaskProvider(
-                ContextVarWorkerTaskProvider(default_current_task_holder),
-                binder.injector,  # type: ignore
+                ContextVarWorkerTaskProvider(default_current_task_holder),  # type: ignore[arg-type]
+                binder.injector,
             )
         )
         binder.bind(PostedTask, provider)

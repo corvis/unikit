@@ -56,7 +56,7 @@ class RedisLock(Lock):
                 lock_owner=d.get("own"),
             )
         except KeyError as e:
-            raise ValueError(f"Invalid redis lock object. Missing field {e}. Object: {d}")
+            raise ValueError(f"Invalid redis lock object. Missing field {e}. Object: {d}") from e
         except ValueError as e:
             raise ValueError(f"Invalid redis lock object. Invalid timestamp: {e}") from e
 

@@ -105,11 +105,11 @@ class SecurityContextMiddleware(TaskiqMiddleware, Generic[TBaseSecurityContext])
         """Pre-send hook to attach security context properties to Taskiq message."""
         try:
             security_context = root_container.get(self._security_context_interface_cls)
-        except Exception:
+        except Exception as e:
             raise Exception(
                 "Security context is not available in DI container. Make sure you've registered it "
                 "like it is shown in the docs for ContextVarSecurityContextHolder."
-            )
+            ) from e
         await self._attach_context_to_message(message, security_context)
         return message
 

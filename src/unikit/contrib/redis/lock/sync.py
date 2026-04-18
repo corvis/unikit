@@ -49,7 +49,7 @@ class RedisLockService(BaseRedisLockService):
         """Get all locks synchronously."""
         result: list[Lock] = []
         keys = self.__redis.keys("*")
-        for k in keys:  # type: ignore[union-attr]
+        for k in keys:
             lock = self.__get_lock(str(k, encoding="utf-8"))
             if lock:
                 result.append(lock)
