@@ -1,12 +1,13 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
+from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 import datetime
 import time
 from types import FrameType
-from typing import Any, AsyncIterator, Iterator, Never
+from typing import Any, Never
 
 from unikit.abstract import Abstract, AbstractMeta
 from unikit.lock.dto import Lock
@@ -258,9 +259,7 @@ class LockService(Abstract, metaclass=AbstractMeta):
                         should_skip = True
                         break
                 if not should_skip:
-                    return "{} at {}:{}".format(
-                        frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno
-                    )
+                    return f"{frame.f_code.co_name} at {frame.f_code.co_filename}:{frame.f_code.co_firstlineno}"
             frame = frame.f_back
             depth += 1
         return None

@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 
@@ -8,7 +8,7 @@ from unikit.utils.type_utils import TAnyDate
 
 def datetime_now() -> datetime.datetime:
     """Return `now` in UTC."""
-    return datetime.datetime.now(tz=datetime.timezone.utc)
+    return datetime.datetime.now(tz=datetime.UTC)
 
 
 def get_midnight(date: datetime.datetime | None = None) -> datetime.datetime:
@@ -33,7 +33,9 @@ def first_day_of_next_month(date: TAnyDate) -> TAnyDate:
     return last_day_of_month(date) + datetime.timedelta(days=1)
 
 
-def get_month_boundaries(month: datetime.datetime) -> tuple[datetime.datetime, datetime.datetime]:
+def get_month_boundaries(
+    month: datetime.datetime,
+) -> tuple[datetime.datetime, datetime.datetime]:
     """Return tuple of the earliest and the latest passed month datetimes."""
     earliest = first_day_of_month(month).replace(hour=0, minute=0, second=0, microsecond=0)
     latest = last_day_of_month(month).replace(hour=23, minute=59, second=59, microsecond=999999)

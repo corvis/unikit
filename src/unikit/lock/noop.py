@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 from typing import Any
@@ -26,7 +26,7 @@ class NoopLockService(LockService):
         target_id = self._create_target_id(target)
         full_op_name = self._create_op_name(op_name, op_params)
         lock_id = self._create_pk_for_lock(full_op_name, target_id)
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
         lock = SimpleLockDto(
             lock_id=lock_id,
             operation_name=op_name,
@@ -62,7 +62,10 @@ class NoopLockService(LockService):
         return await sync_to_async(self.acquire)(op_name, target, op_params, timeout)
 
     async def aget_lock(
-        self, op_name: str | None = None, target: str | None = None, op_params: dict[str, Any] | None = None
+        self,
+        op_name: str | None = None,
+        target: str | None = None,
+        op_params: dict[str, Any] | None = None,
     ) -> Lock | None:
         """Get a lock asynchronously."""
         return None

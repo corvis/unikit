@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 from typing import Any, Generic
@@ -62,7 +62,12 @@ class TaskInfoDiMiddleware(TaskiqMiddleware, LogMixin):
         """Post-execute hook to clean up task info."""
         default_current_task_holder.set_current_task(None)
 
-    async def on_error(self, message: TaskiqMessage, result: TaskiqResult[Any], exception: BaseException) -> None:
+    async def on_error(
+        self,
+        message: TaskiqMessage,
+        result: TaskiqResult[Any],
+        exception: BaseException,
+    ) -> None:
         """On error hook to clean up task info."""
         default_current_task_holder.set_current_task(None)
 
@@ -118,7 +123,12 @@ class SecurityContextMiddleware(TaskiqMiddleware, Generic[TBaseSecurityContext])
         """Post-execute hook to clean up security context."""
         default_security_context_holder.set_security_context(None)
 
-    async def on_error(self, message: TaskiqMessage, result: TaskiqResult[Any], exception: BaseException) -> None:
+    async def on_error(
+        self,
+        message: TaskiqMessage,
+        result: TaskiqResult[Any],
+        exception: BaseException,
+    ) -> None:
         """On error hook to clean up security context."""
         default_security_context_holder.set_security_context(None)
 

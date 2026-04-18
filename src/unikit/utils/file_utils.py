@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import hashlib
 from io import IOBase
@@ -99,6 +99,6 @@ def calculate_checksum(input_stream: IO | TextIO | IOBase) -> str:
     return calculate_sha1(input_stream)
 
 
-TIO = TypeVar("TIO", bound=Union[IO, TextIO])
+TIO = TypeVar("TIO", bound=IO | TextIO)
 FModeBinary = Literal["rb", "wb", "ab", "rb+", "wb+", "ab+", "xb", "xb+"]
 FModeText = Literal["r", "w", "a", "r+", "w+", "a+", "x", "x+"]

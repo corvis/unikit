@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
 import dataclasses
@@ -82,7 +82,10 @@ class ProgressState:
         return self
 
     def register_progress(
-        self, success: int | None = None, failed: int | None = None, skipped: int | None = None
+        self,
+        success: int | None = None,
+        failed: int | None = None,
+        skipped: int | None = None,
     ) -> Self:
         """Register progress."""
         self.register_successful(success or 0).register_failed(failed or 0).register_skipped(skipped or 0)
@@ -116,7 +119,11 @@ class ProgressState:
     @classmethod
     def create_by_items(cls, total_items: int, eta: datetime.timedelta | None = None) -> Self:
         """Create progress state by total items count."""
-        return cls(items_total=total_items, items_done=0, eta_seconds=int(eta.total_seconds()) if eta else None)
+        return cls(
+            items_total=total_items,
+            items_done=0,
+            eta_seconds=int(eta.total_seconds()) if eta else None,
+        )
 
 
 TProgressState = TypeVar("TProgressState", bound=ProgressState)

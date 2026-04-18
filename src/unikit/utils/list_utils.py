@@ -1,8 +1,7 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
-from collections.abc import Collection, Iterable
-from typing import Sequence
+from collections.abc import Collection, Iterable, Sequence
 
 from .type_utils import T
 

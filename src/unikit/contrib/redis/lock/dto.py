@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 import logging
@@ -34,7 +34,7 @@ class RedisLock(Lock):
         self.__op_name = op_name
         self.__lock_owner = lock_owner
         self.__target_id = target_id
-        self.__ts_acquired = ts_acquired or datetime.datetime.now(tz=datetime.timezone.utc)
+        self.__ts_acquired = ts_acquired or datetime.datetime.now(tz=datetime.UTC)
         self.__ts_expires = ts_expires or self.__ts_acquired + DEFAULT_LOCK_TIMEOUT
 
     def __str__(self) -> str:

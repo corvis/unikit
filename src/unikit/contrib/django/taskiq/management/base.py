@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -29,4 +29,4 @@ class BaseTaskiqCommand(BaseCommand):  # type: ignore[misc]
 
     @staticmethod
     def _to_taskiq_class_path(path: str) -> str:
-        return ":".join((path.rsplit(".", 1)))
+        return ":".join(path.rsplit(".", 1))

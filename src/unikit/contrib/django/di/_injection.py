@@ -1,13 +1,14 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import asyncio
+from collections.abc import Callable, Sequence
 import functools
 from importlib import import_module
 from inspect import isfunction, ismethod
 import logging
 import threading
-from typing import Any, Callable, Sequence, cast, get_type_hints
+from typing import Any, cast, get_type_hints
 
 from asgiref.sync import markcoroutinefunction
 from django.conf import settings
@@ -71,7 +72,6 @@ class _DjangoInjectionApp(BaseDiSupportedApp):
 
 
 class _DjangoDiModule(DiModule):
-
     def __init__(self) -> None:
         super().__init__()
         try:

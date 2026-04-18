@@ -22,21 +22,32 @@ repos:
     hooks:
       - id: yamllint
         name: Check YAML files with yamllint
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+  - repo: local
     hooks:
-      - id: isort
-        name: Check imports order (isort)
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
+      - name: Ruff Fix
+        id: ruff-fix
+        language: system
+        pass_filenames: true
+        stages: [ commit ]
+        types: [ file, python ]
+        entry: ruff
+        args: [ "check", "--select", "I,UP", "--fix" ]
+      - name: Ruff Format
+        id: ruff-format
+        language: system
+        pass_filenames: true
+        stages: [ commit ]
+        types: [ file, python ]
+        entry: ruff
+        args: [ "format" ]
+  - repo: local
     hooks:
-      - id: black
-        name: Check format (black)
-  - repo: https://gitlab.com/smop/pre-commit-hooks
-    rev: v1.0.0
-    hooks:
-      - id: check-poetry
-        name: Validate poetry config
+      - name: Poetry Check
+        id: check-poetry
+        language: system
+        pass_filenames: false
+        stages: [ commit ]
+        entry: poetry@2 check
   - repo: local
     hooks:
       - name: Apply copyright

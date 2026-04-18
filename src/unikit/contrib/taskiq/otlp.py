@@ -1,7 +1,8 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
-from typing import Any, Coroutine, cast
+from collections.abc import Coroutine
+from typing import Any, cast
 
 from opentelemetry import context as context_api
 from opentelemetry import trace
@@ -29,16 +30,16 @@ class OpenTelemetryMiddleware(TaskiqMiddleware):
     def __serialize_args_and_kwargs(self, message: TaskiqMessage) -> tuple[str, str]:
         task_args_str = str(message.args)
         if len(task_args_str) > self.TASK_ARGS_LENGTH_LIMIT:
-            task_args_str = f"{task_args_str[:self.TASK_ARGS_LENGTH_LIMIT]}..."
+            task_args_str = f"{task_args_str[: self.TASK_ARGS_LENGTH_LIMIT]}..."
         task_kwargs_str = str(message.kwargs)
         if len(task_kwargs_str) > self.TASK_ARGS_LENGTH_LIMIT:
-            task_kwargs_str = f"{task_kwargs_str[:self.TASK_ARGS_LENGTH_LIMIT]}..."
+            task_kwargs_str = f"{task_kwargs_str[: self.TASK_ARGS_LENGTH_LIMIT]}..."
         return task_args_str, task_kwargs_str
 
     def __serialize_labels(self, message: TaskiqMessage) -> str:
         labels_str = str(message.labels)
         if len(labels_str) > self.TASK_ARGS_LENGTH_LIMIT:
-            labels_str = f"{labels_str[:self.TASK_ARGS_LENGTH_LIMIT]}..."
+            labels_str = f"{labels_str[: self.TASK_ARGS_LENGTH_LIMIT]}..."
         return labels_str
 
     def __serialize_security_context(self, message: TaskiqMessage) -> str:
@@ -142,7 +143,12 @@ class OpenTelemetryMiddleware(TaskiqMiddleware):
             span.set_status(trace.Status(trace.StatusCode.OK))
             span.end()
 
-    def on_error(self, message: "TaskiqMessage", result: TaskiqResult[Any], exception: BaseException) -> None:
+    def on_error(
+        self,
+        message: "TaskiqMessage",
+        result: TaskiqResult[Any],
+        exception: BaseException,
+    ) -> None:
         """On error hook."""
         span: Span | None = getattr(message, self.MSG_SPAN_ATTRIBUTE, None)
         if span:

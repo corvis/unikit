@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 from typing import Any, Generic, cast, overload
 
@@ -73,7 +73,12 @@ class TaskProgressReporter:
             progress,
         )
 
-    async def get_object(self, target_cls: type[_T], key: str | None = None, on_missing: OnErrorDef[Any] = None) -> Any:
+    async def get_object(
+        self,
+        target_cls: type[_T],
+        key: str | None = None,
+        on_missing: OnErrorDef[Any] = None,
+    ) -> Any:
         """Get object from progress."""
         progress = await self.get_progress()
         if progress is None:
@@ -116,7 +121,9 @@ class TaskProgressReporter:
         pass
 
     async def create_tracker(
-        self, progress_state: TProgressState | None = None, report_every_x_updates: int = 5
+        self,
+        progress_state: TProgressState | None = None,
+        report_every_x_updates: int = 5,
     ) -> TaskiqProgressTracker[TProgressState]:
         """Create a new progress tracker."""
         actual_progress_state: TProgressState | ProgressState

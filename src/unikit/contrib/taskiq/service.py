@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 from typing import Any
@@ -63,7 +63,10 @@ class TaskiqWorkerService(WorkerService):
 
         kicked_task = await kicker.with_broker(self.broker).kiq(*args, **kwargs)
         return TaskiqPostedTask(
-            uuid=kicked_task.task_id, timestamp=datetime.datetime.now(), task=kicked_task, task_name=name
+            uuid=kicked_task.task_id,
+            timestamp=datetime.datetime.now(),
+            task=kicked_task,
+            task_name=name,
         )
 
     def get_task_result(self, job_uuid: str) -> TaskResult:

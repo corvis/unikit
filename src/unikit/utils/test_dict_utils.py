@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import dataclasses
 import unittest
@@ -14,7 +14,6 @@ class MyClass:
 
 
 class TestDictUtils(unittest.TestCase):
-
     def test_get_object_dataclass(self):
         given = dict(a=1, b=2, c="3", d=dict(a=10, b=11))
 

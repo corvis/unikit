@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 import json
@@ -33,7 +33,10 @@ class AsyncRedisLockService(BaseRedisLockService):
         return await self.__acquire_lock(lock)
 
     async def aget_lock(
-        self, op_name: str | None = None, target: str | None = None, op_params: dict[str, Any] | None = None
+        self,
+        op_name: str | None = None,
+        target: str | None = None,
+        op_params: dict[str, Any] | None = None,
     ) -> Lock | None:
         """Get a lock asynchronously."""
         full_op_name = self._create_op_name(op_name, op_params)
@@ -64,7 +67,10 @@ class AsyncRedisLockService(BaseRedisLockService):
         return run_async(self.aacquire(op_name=op_name, target=target, op_params=op_params, timeout=timeout))
 
     def get_lock(
-        self, op_name: str | None = None, target: str | None = None, op_params: dict[str, Any] | None = None
+        self,
+        op_name: str | None = None,
+        target: str | None = None,
+        op_params: dict[str, Any] | None = None,
     ) -> Lock | None:
         """Get a lock synchronously."""
         return run_async(self.aget_lock(op_name=op_name, target=target, op_params=op_params))
@@ -83,7 +89,10 @@ class AsyncRedisLockService(BaseRedisLockService):
 
     async def __acquire_lock(self, lock: RedisLock) -> RedisLock | None:
         acquired = await self.__redis.set(
-            lock.get_lock_id(), value=json.dumps(lock.to_dict()), nx=True, pxat=lock.get_ts_expires()
+            lock.get_lock_id(),
+            value=json.dumps(lock.to_dict()),
+            nx=True,
+            pxat=lock.get_ts_expires(),
         )
         return lock if acquired else None
 

@@ -1,14 +1,15 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
+from collections.abc import Callable, Sequence
 from functools import wraps
 import importlib
 import importlib.util
 import inspect
 import logging
 import typing
-from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeAlias, TypeVar
 
 import injector
 from injector import T
@@ -36,7 +37,13 @@ class DiPlaceholder:
     """Placeholder for the DI container to inject the value."""
 
     def __getattribute__(self, item: Any) -> Any:
-        if item in ("__class__", "__deepcopy__", "__reduce_ex__", "__reduce__", "__getstate__"):
+        if item in (
+            "__class__",
+            "__deepcopy__",
+            "__reduce_ex__",
+            "__reduce__",
+            "__getstate__",
+        ):
             return super().__getattribute__(item)
         raise RuntimeError(f"This parameter must be injected by DI container (invoked attribute: {item})")
 
@@ -200,7 +207,11 @@ class DiModule(injector.Module):
                 self.register_singleton(interface=x, to=InterfaceAwareClassProvider(x, interface_cls=x))
 
     def add_to_registry(
-        self, registry_cls: type[Registry], obj: BindArg, key: Any = None, skip_container: bool = False
+        self,
+        registry_cls: type[Registry],
+        obj: BindArg,
+        key: Any = None,
+        skip_container: bool = False,
     ) -> None:
         """Add given object to the registry."""
         assert self.__binder is not None
@@ -325,8 +336,7 @@ def has_inject_marker(v: type) -> bool:
     :return: true if injector marker is present
     """
     return (
-        injector._is_specialization(v, typing.Annotated)
-        and injector._inject_marker in v.__metadata__  # type: ignore[attr-defined]
+        injector._is_specialization(v, typing.Annotated) and injector._inject_marker in v.__metadata__  # type: ignore[attr-defined]
     )
 
 

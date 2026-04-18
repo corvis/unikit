@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 __all__ = (
     "apply_pipeline",
@@ -9,8 +9,8 @@ __all__ = (
     "strip_newlines",
 )
 
+from collections.abc import Callable, Sequence
 import re
-from typing import Callable, Sequence
 
 _RE_WHITESPACES = re.compile(r"[\s\n]", re.IGNORECASE)
 _RE_MULTIPLE_WHITESPACES = re.compile(r"\s+", re.IGNORECASE)

@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
 from typing import Any
@@ -49,7 +49,12 @@ class AbstractMeta(abc.ABCMeta):
     """
 
     def __new__(
-        mcls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], /, **kwargs: Any
+        mcls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        /,
+        **kwargs: Any,
     ) -> "AbstractMeta":
         """See class description."""
         result = super().__new__(mcls, name, bases, namespace, **kwargs)

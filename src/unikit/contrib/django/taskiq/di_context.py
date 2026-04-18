@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import injector
 
@@ -8,7 +8,6 @@ from unikit.worker import WorkerServiceRegistry
 
 
 class _TaskiqModule(BaseTaskiqDiModule):
-
     def configure(self, binder: injector.Binder) -> None:
         super().configure(binder)
 

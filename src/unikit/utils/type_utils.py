@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import datetime
 from typing import Any, Protocol, TypeAlias, TypeVar
@@ -41,7 +41,11 @@ class SupportsDunderGE(Protocol[_T_contra]):
 
 
 class SupportsAllComparisons(
-    SupportsDunderLT[Any], SupportsDunderGT[Any], SupportsDunderLE[Any], SupportsDunderGE[Any], Protocol
+    SupportsDunderLT[Any],
+    SupportsDunderGT[Any],
+    SupportsDunderLE[Any],
+    SupportsDunderGE[Any],
+    Protocol,
 ):
     """A type that supports all comparison operators."""
 

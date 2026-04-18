@@ -1,9 +1,10 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
+from collections.abc import Sequence
 import datetime
 import json
-from typing import Any, Sequence
+from typing import Any
 
 from asgiref.sync import sync_to_async
 from redis import StrictRedis
@@ -79,8 +80,7 @@ class RedisLockService(BaseRedisLockService):
             return lock.clone(ts_expires=new_expiration_ts)
         else:
             raise ValueError(
-                f"Unable to extend lock {lock_id}. Lock doesn't exist, already expired or you do "
-                f"not have permissions"
+                f"Unable to extend lock {lock_id}. Lock doesn't exist, already expired or you do not have permissions"
             )
 
     async def aacquire(
@@ -94,7 +94,10 @@ class RedisLockService(BaseRedisLockService):
         return await sync_to_async(self.acquire)(op_name=op_name, target=target, op_params=op_params, timeout=timeout)
 
     async def aget_lock(
-        self, op_name: str | None = None, target: str | None = None, op_params: dict[str, Any] | None = None
+        self,
+        op_name: str | None = None,
+        target: str | None = None,
+        op_params: dict[str, Any] | None = None,
     ) -> Lock | None:
         """Get a lock asynchronously."""
         return await sync_to_async(self.get_lock)(op_name=op_name, target=target, op_params=op_params)
@@ -115,7 +118,10 @@ class RedisLockService(BaseRedisLockService):
 
     def __acquire_lock(self, lock: RedisLock) -> RedisLock | None:
         acquired = self.__redis.set(
-            lock.get_lock_id(), value=json.dumps(lock.to_dict()), nx=True, pxat=lock.get_ts_expires()
+            lock.get_lock_id(),
+            value=json.dumps(lock.to_dict()),
+            nx=True,
+            pxat=lock.get_ts_expires(),
         )
         return lock if acquired else None
 

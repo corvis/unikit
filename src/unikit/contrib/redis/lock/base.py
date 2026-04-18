@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
 import datetime
@@ -47,7 +47,7 @@ class BaseRedisLockService(LockService, metaclass=abc.ABCMeta):
         target_id = cls._create_target_id(target)
         full_op_name = cls._create_op_name(op_name, op_params)
         lock_id = cls._create_pk_for_lock(full_op_name, target_id)
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
         lock = RedisLock(
             lock_id=lock_id,
             op_name=op_name,

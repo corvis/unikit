@@ -1,9 +1,10 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
-from contextlib import contextmanager
+from collections.abc import Generator
+from contextlib import AbstractContextManager, contextmanager
 import logging
-from typing import Any, ContextManager, Generator
+from typing import Any
 
 
 class StaticFieldFilter(logging.Filter):
@@ -33,7 +34,7 @@ class LogMixin:
             self._log = logging.getLogger(self.__class__.__module__ + "." + self.__class__.__name__)
         return self._log
 
-    def with_logging_context(self, **extras: Any) -> ContextManager[None]:
+    def with_logging_context(self, **extras: Any) -> AbstractContextManager[None]:
         """
         Context manager that adds extra fields to log records.
 

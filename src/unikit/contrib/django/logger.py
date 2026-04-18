@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 from collections.abc import Callable
 import logging
@@ -8,7 +8,10 @@ from uuid import uuid4
 
 from django.http import HttpRequest, HttpResponse
 
-from unikit.contrib.django.middleware import AsyncOrSyncCallback, BaseUniversalMiddleware
+from unikit.contrib.django.middleware import (
+    AsyncOrSyncCallback,
+    BaseUniversalMiddleware,
+)
 from unikit.di import root_container
 from unikit.utils.stats_utils import PerfExecutionTimer
 from unikit.utils.type_utils import none_raises
@@ -143,7 +146,12 @@ class RequestLoggingMiddleware(BaseUniversalMiddleware):
         self, request: HttpRequest, response: HttpResponse, exec_time: float
     ) -> dict[str, str | None]:
         data = self._capture_response_info(request, response, exec_time)
-        self._logger_response.debug("Response status %s in %.3f seconds", response.status_code, exec_time, extra=data)
+        self._logger_response.debug(
+            "Response status %s in %.3f seconds",
+            response.status_code,
+            exec_time,
+            extra=data,
+        )
         return data
 
     @staticmethod

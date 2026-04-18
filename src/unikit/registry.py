@@ -1,8 +1,9 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
-from typing import Any, Generator, Generic, TypeVar, cast
+from collections.abc import Generator
+from typing import Any, Generic, TypeVar, cast
 
 import injector
 from typing_extensions import override

@@ -1,11 +1,12 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import asyncio
+from collections.abc import Awaitable, Callable, Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 import inspect
-from typing import Any, Awaitable, Callable, Coroutine
+from typing import Any
 
 from unikit.registry import T
 from unikit.utils.type_utils import R

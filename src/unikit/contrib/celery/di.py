@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
 from typing import Any, Generic
@@ -18,7 +18,13 @@ class TaskBodyMeta(abc.ABCMeta):
     See TaskBody for more information.
     """
 
-    def __new__(mcs, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:
+    def __new__(
+        mcs,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        **kwargs: Any,
+    ) -> type:
         """Make class compatible with Celery's shared_task/task decorator."""
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
         if not hasattr(cls, "run"):

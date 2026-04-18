@@ -1,12 +1,16 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import injector
 
 from unikit.abstract import Abstract, AbstractMeta
 from unikit.contrib.taskiq.dto import TaskiqTask
 from unikit.di import DiModule, DiProxy
-from unikit.worker import ContextVarWorkerTaskHolder, ContextVarWorkerTaskProvider, PostedTask
+from unikit.worker import (
+    ContextVarWorkerTaskHolder,
+    ContextVarWorkerTaskProvider,
+    PostedTask,
+)
 
 
 class BaseTaskiqDiModule(DiModule, Abstract, metaclass=AbstractMeta):
@@ -18,7 +22,8 @@ class BaseTaskiqDiModule(DiModule, Abstract, metaclass=AbstractMeta):
 
         provider = injector.InstanceProvider(
             PostedTaskProvider(
-                ContextVarWorkerTaskProvider(default_current_task_holder), binder.injector  # type: ignore
+                ContextVarWorkerTaskProvider(default_current_task_holder),
+                binder.injector,  # type: ignore
             )
         )
         binder.bind(PostedTask, provider)

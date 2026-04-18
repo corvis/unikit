@@ -1,8 +1,9 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
+from collections.abc import Mapping
 import dataclasses
-from typing import Any, Mapping, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -75,7 +76,10 @@ def set_objects(_dict: dict, *objects: Any, key: str | None = None) -> None:
 
 
 def get_object(
-    _dict: TDict, target_cls: type[_T], key: str | None = None, on_missing: OnErrorDef[Any] = None
+    _dict: TDict,
+    target_cls: type[_T],
+    key: str | None = None,
+    on_missing: OnErrorDef[Any] = None,
 ) -> _T | None:
     """
     Get the object from the dictionary and convert it to the target class.
@@ -89,7 +93,8 @@ def get_object(
     target_object = _dict.get(key) if key else _dict
     if target_object is None:
         return raise_or_default(
-            on_missing, f"Key `{key}` not found in the dictionary" if key else "Dictionary is empty"
+            on_missing,
+            (f"Key `{key}` not found in the dictionary" if key else "Dictionary is empty"),
         )
     if dataclasses.is_dataclass(target_cls):
         fields = set([f.name for f in dataclasses.fields(target_cls)])

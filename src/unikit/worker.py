@@ -1,5 +1,5 @@
 #
-#  Copyright 2025 by Dmitry Berezovsky, MIT License
+#  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
 from contextvars import ContextVar
@@ -55,7 +55,12 @@ class TaskResult:
     task_name: str | None = None
     security_context: SecurityContextDto = dataclasses.field(default_factory=SecurityContextDto)
 
-    def get_result_obj(self, target_cls: type[T], key: str | None = None, on_missing: OnErrorDef[Any] = None) -> Any:
+    def get_result_obj(
+        self,
+        target_cls: type[T],
+        key: str | None = None,
+        on_missing: OnErrorDef[Any] = None,
+    ) -> Any:
         """Get the result object by the given target class."""
         if self.result is None:
             return raise_or_default(on_missing, "Result is not available")
