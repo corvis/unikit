@@ -141,8 +141,8 @@ class WorkerServiceRegistry(Registry[str, WorkerService]):
         :return: worker service for the task
         """
         for ws in self.get_all():
-            ws.supports_task(task_name)
-            return ws
+            if ws.supports_task(task_name):
+                return ws
         raise KeyError(f"Worker service for task `{task_name}` not found in registry.")
 
     def get_for_task_or_default(self, task_name: str) -> WorkerService:

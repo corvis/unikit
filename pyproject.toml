@@ -117,7 +117,7 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 # External libs which doesn't have type hints (py.typed marker)
-module = ["django.*", "celery.*", "environ.*", "ipware.*"]
+module = ["django.*", "celery.*", "environ.*", "ipware.*", "taskiq_redis.*"]
 ignore_missing_imports = true
 follow_imports = "skip"
 

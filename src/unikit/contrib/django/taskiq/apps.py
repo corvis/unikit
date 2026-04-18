@@ -22,7 +22,7 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
 
     Supported Settings:
        - TASKIQ_BROKER_DEFINITION: str - Dotted path to the broker object instance to use,
-        if ommited the new one will be created.
+        if omitted the new one will be created.
        - TASKIQ_BROKER_URL: str - URL to the broker.
        - TASKIQ_TASK_DISCOVERY_PATTERN: str - Glob pattern to discover tasks, default: `**/tasks.py`.
        - TASKIQ_RESULT_BACKEND_URL: str - URL to the result backend.
