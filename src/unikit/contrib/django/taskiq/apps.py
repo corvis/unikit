@@ -2,6 +2,7 @@
 #  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import asyncio
+from collections.abc import Sequence
 from typing import Any
 
 from django.conf import settings
@@ -37,7 +38,7 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         super().__init__(app_name, app_module)
         self.broker_paths: dict[str, str] = {}
         self.brokers: dict[str, AsyncBroker] = {}
-        self.task_discovery_pattern = "**/tasks.py"
+        self.task_discovery_pattern: Sequence[str] = ("**/tasks.py",)
         self.init_brokers_on_ready = getattr(settings, "TASKIQ_AUTO_INIT_BROKERS", False)
 
     @property
@@ -59,7 +60,9 @@ class TaskiqConfig(BaseDiSupportedApp, LogMixin):
         """Django callback invoked when application is ready to be used."""
         super().ready()
 
-        self.task_discovery_pattern = getattr(settings, "TASKIQ_TASK_DISCOVERY_PATTERN", self.task_discovery_pattern)
+        self.task_discovery_pattern = ensure_list(
+            getattr(settings, "TASKIQ_TASK_DISCOVERY_PATTERN", self.task_discovery_pattern)
+        )
 
         broker_object_paths = getattr(settings, "TASKIQ_BROKER_DEFINITION", None)
         if broker_object_paths is not None:

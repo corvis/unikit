@@ -2,11 +2,14 @@
 #  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import abc
+import asyncio
 import dataclasses
 import datetime
 import logging
+import time
 from typing import Any, Generic, Self, TypeVar
 
+from unikit.utils.async_utils import run_coroutine_in_running_loop
 from unikit.utils.logger import LogMixin
 from unikit.utils.time_utils import datetime_now
 
@@ -303,3 +306,172 @@ class SimpleProgressTracker(ProgressTracker[TProgressState], Generic[TProgressSt
     def create(cls) -> "SimpleProgressTracker[ProgressState]":
         """Create a new instance of the progress tracker with default Progres State implementation attached."""
         return SimpleProgressTracker[ProgressState](ProgressState())
+
+
+@dataclasses.dataclass(kw_only=True)
+class SubtaskHandle:
+    """Represents a registered subtask for composite progress tracking."""
+
+    task_id: str
+    """Unique identifier of the subtask."""
+    items_total: int = 1
+    """Number of items this subtask is responsible for processing."""
+
+
+class CompositeProgressTracker(ProgressTracker[TProgressState], Generic[TProgressState], metaclass=abc.ABCMeta):
+    """
+    A progress tracker that aggregates progress from multiple subtasks.
+
+    This tracker is used by parent tasks that spawn child (sub) tasks and need to present
+    a unified progress view to the caller. The parent registers subtask handles, and this
+    tracker periodically polls their progress and aggregates it into the parent's ProgressState.
+
+    Subclasses must implement :meth:`_fetch_subtask_progress` to retrieve the progress
+    state of individual subtasks from the specific backend.
+    """
+
+    DEFAULT_POLL_INTERVAL_SECONDS: float = 2.0
+
+    def __init__(
+        self,
+        progress_state: TProgressState,
+        report_every_x_updates: int = 5,
+        poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
+    ) -> None:
+        super().__init__(progress_state, report_every_x_updates)
+        self._subtasks: list[SubtaskHandle] = []
+        self._poll_interval_seconds = poll_interval_seconds
+
+    @property
+    def subtasks(self) -> list[SubtaskHandle]:
+        """Get the list of registered subtask handles."""
+        return self._subtasks
+
+    def register_subtask(self, task_id: str, items_total: int = 1) -> SubtaskHandle:
+        """
+        Register a subtask for progress aggregation.
+
+        :param task_id: unique identifier of the subtask.
+        :param items_total: number of items this subtask is responsible for.
+        :return: the created SubtaskHandle.
+        """
+        handle = SubtaskHandle(task_id=task_id, items_total=items_total)
+        self._subtasks.append(handle)
+        return handle
+
+    def register_subtasks(self, task_ids: list[str], items_per_task: int = 1) -> list[SubtaskHandle]:
+        """
+        Batch-register multiple subtasks.
+
+        :param task_ids: list of subtask identifiers.
+        :param items_per_task: number of items each subtask is responsible for.
+        :return: list of created SubtaskHandle objects.
+        """
+        return [self.register_subtask(tid, items_per_task) for tid in task_ids]
+
+    @abc.abstractmethod
+    async def _fetch_subtask_progress(self, handle: SubtaskHandle) -> ProgressState | None:
+        """
+        Fetch the progress state of a single subtask.
+
+        Implementations should return the subtask's current ProgressState, or None if not available.
+        If the subtask has completed (successfully or with failure) but no progress is available,
+        implementation should return a ProgressState with items_done == handle.items_total.
+
+        :param handle: the subtask handle to fetch progress for.
+        :return: the subtask's progress state, or None if unavailable.
+        """
+        pass
+
+    async def aaggregate(self, max_concurrency: int | None = 10) -> None:
+        """
+        Fetch progress from all subtasks concurrently and aggregate into the parent's ProgressState (async).
+
+        This updates items_done, items_success, items_failed, items_skipped, items_total,
+        and failed_items on the parent state.
+
+        :param max_concurrency: maximum number of concurrent backend fetches. If None, all subtasks
+            are fetched simultaneously via :func:`asyncio.gather`. Pass a positive integer to limit
+            parallelism (e.g. when hitting a rate-limited backend).
+        """
+        total, done, success, failed, skipped = 0, 0, 0, 0, 0
+        failed_items: dict[str, str] = {}
+
+        async def _fetch(handle: SubtaskHandle) -> tuple[SubtaskHandle, ProgressState | None]:
+            return handle, await self._fetch_subtask_progress(handle)
+
+        if max_concurrency is None:
+            results = await asyncio.gather(*(_fetch(h) for h in self._subtasks))
+        else:
+            semaphore = asyncio.Semaphore(max_concurrency)
+
+            async def _fetch_limited(handle: SubtaskHandle) -> tuple[SubtaskHandle, ProgressState | None]:
+                async with semaphore:
+                    return await _fetch(handle)
+
+            results = await asyncio.gather(*(_fetch_limited(h) for h in self._subtasks))
+
+        for handle, sub_state in results:
+            total += handle.items_total
+            if sub_state is None:
+                continue
+            done += sub_state.items_done or 0
+            success += sub_state.items_success or 0
+            failed += sub_state.items_failed or 0
+            skipped += sub_state.items_skipped or 0
+            if sub_state.failed_items:
+                failed_items.update(sub_state.failed_items)
+
+        self._state.items_total = total
+        self._state.items_done = done
+        self._state.items_success = success
+        self._state.items_failed = failed
+        self._state.items_skipped = skipped
+        self._state.failed_items = failed_items
+        self._state.pct = None  # let progress_percent compute from items
+
+    def aggregate(self, max_concurrency: int | None = 10) -> None:
+        """
+        Fetch progress from all subtasks and aggregate into the parent's ProgressState (sync).
+
+        This is a synchronous wrapper around :meth:`aaggregate`.
+
+        :param max_concurrency: maximum number of concurrent backend fetches. If None, all subtasks
+            are fetched simultaneously via :func:`asyncio.gather`. Pass a positive integer to limit
+            parallelism (e.g. when hitting a rate-limited backend).
+        """
+        run_coroutine_in_running_loop(self.aaggregate(max_concurrency))
+
+    @property
+    def all_subtasks_complete(self) -> bool:
+        """Return True if all subtasks have completed (items_done >= items_total)."""
+        if not self._subtasks:
+            return True
+        total = sum(h.items_total for h in self._subtasks)
+        return (self._state.items_done or 0) >= total
+
+    async def await_for_subtasks(self, poll_interval: float | None = None, max_concurrency: int | None = 10) -> None:
+        """
+        Poll subtask progress until all subtasks are complete, reporting progress along the way (async).
+
+        :param poll_interval: seconds between polls; defaults to poll_interval_seconds set at init.
+        :param max_concurrency: maximum concurrent backend fetches per poll cycle; None means unlimited.
+        """
+        interval = poll_interval if poll_interval is not None else self._poll_interval_seconds
+        while not self.all_subtasks_complete:
+            await self.aaggregate(max_concurrency=max_concurrency)
+            await self._ado_report_update()
+            await asyncio.sleep(interval)
+
+    def wait_for_subtasks(self, poll_interval: float | None = None, max_concurrency: int | None = 10) -> None:
+        """
+        Poll subtask progress until all subtasks are complete, reporting progress along the way (sync).
+
+        :param poll_interval: seconds between polls; defaults to poll_interval_seconds set at init.
+        :param max_concurrency: maximum concurrent backend fetches per poll cycle; None means unlimited.
+        """
+        interval = poll_interval if poll_interval is not None else self._poll_interval_seconds
+        while not self.all_subtasks_complete:
+            time.sleep(interval)
+            run_coroutine_in_running_loop(self.aaggregate(max_concurrency=max_concurrency))
+            self._do_report_update()

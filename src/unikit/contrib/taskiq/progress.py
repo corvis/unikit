@@ -2,7 +2,7 @@
 #  Copyright 2026 by Dmitry Berezovsky, MIT License
 #
 import dataclasses
-from typing import Any, Generic, cast, overload
+from typing import TYPE_CHECKING, Any, Generic, cast, overload
 
 from taskiq import Context
 from taskiq.depends.progress_tracker import TaskProgress, TaskState
@@ -14,6 +14,9 @@ from unikit.utils import dict_utils
 from unikit.utils.async_utils import run_coroutine_in_running_loop
 from unikit.utils.default import OnErrorDef, raise_or_default
 from unikit.worker import RESULT_KEY_PROGRESS_STATE
+
+if TYPE_CHECKING:
+    from unikit.contrib.taskiq.composite import TaskiqCompositeProgressTracker
 
 
 class TaskiqProgressTracker(ProgressTracker[TProgressState], Generic[TProgressState]):
@@ -172,3 +175,45 @@ class TaskProgressReporter:
         tracker = TaskiqProgressTracker(self, actual_progress_state, report_every_x_updates)
         tracker.init()
         return cast(TaskiqProgressTracker[TProgressState], tracker)
+
+    @overload
+    async def create_composite_tracker(
+        self, *, report_every_x_updates: int = 1, poll_interval_seconds: float = 2.0
+    ) -> "TaskiqCompositeProgressTracker[ProgressState]":
+        pass
+
+    @overload
+    async def create_composite_tracker(
+        self,
+        progress_state: TProgressState,
+        report_every_x_updates: int = 1,
+        poll_interval_seconds: float = 2.0,
+    ) -> "TaskiqCompositeProgressTracker[TProgressState]":
+        pass
+
+    async def create_composite_tracker(
+        self,
+        progress_state: TProgressState | None = None,
+        report_every_x_updates: int = 1,
+        poll_interval_seconds: float = 2.0,
+    ) -> "TaskiqCompositeProgressTracker[TProgressState]":
+        """
+        Create a composite progress tracker for parent tasks that spawn subtasks.
+
+        :param progress_state: optional custom progress state; defaults to ProgressState().
+        :param report_every_x_updates: how often to persist progress updates.
+        :param poll_interval_seconds: interval for polling subtask progress in wait_for_subtasks().
+        :return: initialized TaskiqCompositeProgressTracker.
+        """
+        from unikit.contrib.taskiq.composite import TaskiqCompositeProgressTracker  # noqa: PLC0415
+
+        actual_progress_state: TProgressState
+        if progress_state is None:
+            actual_progress_state = cast(TProgressState, ProgressState())
+        else:
+            actual_progress_state = progress_state
+        tracker = TaskiqCompositeProgressTracker[TProgressState](
+            self, actual_progress_state, report_every_x_updates, poll_interval_seconds
+        )
+        await tracker.ainit()
+        return tracker
