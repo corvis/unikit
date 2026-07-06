@@ -53,6 +53,7 @@ def init_cpu_pool(
     initializer: Callable[..., None] | None = None,
     initargs: tuple[Any, ...] = (),
     mp_context: multiprocessing.context.BaseContext | None = None,
+    max_tasks_per_child: int | None = None,
 ) -> ProcessPoolExecutor:
     """
     Create and store the global ``ProcessPoolExecutor`` used for CPU-bound tasks.
@@ -73,15 +74,41 @@ def init_cpu_pool(
         fully-initialized state (including Django) and requires no *initializer*.
         Use ``spawn`` or ``forkserver`` on platforms where ``fork`` is unsafe, and
         supply an *initializer* to set up Django in each worker.
+    :param max_tasks_per_child: recycle each worker process after it has executed
+        this many tasks, replacing it with a fresh one.  Bounds the impact of any
+        per-task resource accumulation (e.g. leaked connections) inside long-lived
+        workers.  ``None`` (default) keeps workers for the pool's whole lifetime.
+        Ignored with a warning when the ``fork`` start method is used, since
+        ``ProcessPoolExecutor`` does not support recycling under ``fork``.
     :return: the newly created pool.
+    :raises ValueError: if *size* is less than 1, or if *max_tasks_per_child* is less than 1.
     """
+    if size < 1:
+        raise ValueError(f"init_cpu_pool() requires size >= 1, got {size!r}.")
+    if max_tasks_per_child is not None and max_tasks_per_child < 1:
+        raise ValueError(f"init_cpu_pool() requires max_tasks_per_child >= 1, got {max_tasks_per_child!r}.")
     global _pool
     if _pool is not None:
         logger.warning("CPU pool already initialized - replacing existing pool (size=%d).", size)
         _pool.shutdown(wait=True)
     ctx = mp_context if mp_context is not None else multiprocessing.get_context("fork")
-    _pool = ProcessPoolExecutor(max_workers=size, initializer=initializer or None, initargs=initargs, mp_context=ctx)
-    logger.info("CPU process pool initialized with %d worker(s) (start method: %s).", size, ctx.get_start_method())
+    pool_kwargs: dict[str, Any] = dict(max_workers=size, initializer=initializer or None, initargs=initargs)
+    if max_tasks_per_child is not None:
+        if ctx.get_start_method() == "fork":
+            logger.warning(
+                "max_tasks_per_child=%d is not supported with the 'fork' start method and will be ignored. "
+                "Use 'forkserver' or 'spawn' to enable worker recycling.",
+                max_tasks_per_child,
+            )
+        else:
+            pool_kwargs["max_tasks_per_child"] = max_tasks_per_child
+    _pool = ProcessPoolExecutor(mp_context=ctx, **pool_kwargs)
+    logger.info(
+        "CPU process pool initialized with %d worker(s) (start method: %s, max_tasks_per_child: %s).",
+        size,
+        ctx.get_start_method(),
+        pool_kwargs.get("max_tasks_per_child"),
+    )
     return _pool
 
 

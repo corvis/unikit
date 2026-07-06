@@ -12,7 +12,9 @@ __all__ = [
 
 import abc
 import asyncio
+import atexit
 import inspect
+import logging
 import threading
 from typing import Any, Protocol
 
@@ -20,6 +22,8 @@ from taskiq import Context
 
 from unikit.contrib.taskiq.cpu_pool import get_cpu_pool
 from unikit.contrib.taskiq.task import BaseTaskiqTask
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SubprocessContextFactory(Protocol):
@@ -181,17 +185,96 @@ class CpuBoundTaskiqTask(BaseTaskiqTask, metaclass=abc.ABCMeta):
         )
 
 
-def _run_loop_forever(loop: asyncio.AbstractEventLoop) -> None:
+def _run_loop_forever(loop: asyncio.AbstractEventLoop, ready: threading.Event) -> None:
     """Run *loop* until :meth:`~asyncio.AbstractEventLoop.stop` is called.
 
     Intended to be executed in a daemon background thread so that synchronous
     :meth:`~CpuBoundTaskiqTask.run_cpu_bound` implementations can schedule
     coroutines onto it via :func:`~unikit.utils.async_utils.run_coroutine_in_running_loop`.
 
+    ``ready`` is set via :meth:`~asyncio.AbstractEventLoop.call_soon` so it fires
+    during the first iteration of ``run_forever()``, guaranteeing the loop is
+    running before the caller proceeds.
+
     :param loop: The event loop to run.
+    :param ready: Event signalled once the loop is confirmed running.
     """
     asyncio.set_event_loop(loop)
+    loop.call_soon(ready.set)
     loop.run_forever()
+
+
+#: Process-wide background loop shared by every sync ``run_cpu_bound`` invocation
+#: executed in this worker process.  See :func:`_get_process_background_loop`.
+_process_bg_loop: asyncio.AbstractEventLoop | None = None
+_process_bg_loop_thread: threading.Thread | None = None
+_process_bg_loop_lock = threading.Lock()
+
+
+def _get_process_background_loop() -> asyncio.AbstractEventLoop:
+    """
+    Return a single background event loop shared for the lifetime of this process.
+
+    ``ProcessPoolExecutor`` re-uses worker processes for many tasks.  Creating a
+    fresh loop for every task (and closing it afterwards) makes loop-affine async
+    resources - most notably ``redis.asyncio`` connection pools and
+    ``channels_redis`` layers created via progress reporting - bind to a loop that
+    is subsequently closed.  Their connections are then leaked, and awaiting them
+    from a later task's loop deadlocks the worker (the classic *"processes a few
+    tasks then hangs"* failure mode).
+
+    Re-using one long-lived loop keeps those pools valid and reusable across every
+    task handled by the process, so nothing accumulates or dangles.
+
+    :returns: The process-wide background loop, started lazily on first use.
+    """
+    global _process_bg_loop, _process_bg_loop_thread
+    with _process_bg_loop_lock:
+        if (
+            _process_bg_loop is not None
+            and not _process_bg_loop.is_closed()
+            and _process_bg_loop_thread is not None
+            and _process_bg_loop_thread.is_alive()
+        ):
+            return _process_bg_loop
+        ready = threading.Event()
+        loop = asyncio.new_event_loop()
+        thread = threading.Thread(target=_run_loop_forever, args=(loop, ready), daemon=True, name="cpu-task-bg-loop")
+        thread.start()
+        if not ready.wait(timeout=5):
+            loop.close()
+            raise RuntimeError("Background event loop thread failed to start within 5 seconds")
+        _process_bg_loop = loop
+        _process_bg_loop_thread = thread
+        atexit.register(_shutdown_process_background_loop)
+        return loop
+
+
+def _shutdown_process_background_loop() -> None:
+    """Stop and close the process-wide background loop if it is running.
+
+    The loop is only closed after the background thread has confirmed it has
+    exited (i.e. ``run_forever()`` has returned).  If the thread does not exit
+    within the join timeout we leave the loop open to avoid closing a loop that
+    is still being used — this is safe on process exit because the OS reclaims
+    all resources anyway.
+    """
+    global _process_bg_loop, _process_bg_loop_thread
+    with _process_bg_loop_lock:
+        loop, thread = _process_bg_loop, _process_bg_loop_thread
+        _process_bg_loop = None
+        _process_bg_loop_thread = None
+    if loop is None:
+        return
+    loop.call_soon_threadsafe(loop.stop)
+    if thread is not None:
+        thread.join(timeout=5)
+        if thread.is_alive():
+            # Thread didn't stop in time; skip close() to avoid touching a
+            # loop that is still running in another thread.
+            return
+    if not loop.is_closed():
+        loop.close()
 
 
 def _run_cpu_bound_in_process(
@@ -235,18 +318,18 @@ def _run_cpu_bound_in_process(
         # Async implementation — asyncio.run() gives the subprocess its own fresh loop.
         return asyncio.run(instance.run_cpu_bound(*args, **kwargs))
 
-    # Sync implementation — spin up a background event loop so that any call to
-    # run_coroutine_in_running_loop() inside run_cpu_bound() can schedule work on it.
-    loop = asyncio.new_event_loop()
-    _background_loop_thread = threading.Thread(
-        target=_run_loop_forever, args=(loop,), daemon=True, name="cpu-task-bg-loop"
-    )
-    _background_loop_thread.start()
-    try:
-        from unikit.utils.async_utils import set_asyncio_worker_loop
+    # Sync implementation — schedule any run_coroutine_in_running_loop() calls made
+    # inside run_cpu_bound() onto a single background loop that lives for the whole
+    # process, so loop-affine async resources (redis / channels pools) are reused
+    # across tasks instead of being leaked and re-created on every invocation.
+    from unikit.utils.async_utils import set_asyncio_worker_loop
 
-        set_asyncio_worker_loop(loop)
+    loop = _get_process_background_loop()
+    set_asyncio_worker_loop(loop)
+    try:
         return instance.run_cpu_bound(*args, **kwargs)
-    finally:
-        loop.call_soon_threadsafe(loop.stop)
-        _background_loop_thread.join()
+    except Exception:
+        _LOGGER.exception(
+            "Exception in CPU-bound task %s", task_cls.__name__, extra=dict(task_id=task_id, task_cls=task_cls.__name__)
+        )
+        raise
